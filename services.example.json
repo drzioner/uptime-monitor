@@ -1,0 +1,18 @@
+[
+  {
+    "name": "Example API",
+    "url": "https://my-app.onrender.com/health"
+  },
+  {
+    "name": "Example Protected API",
+    "url": "https://my-private-api.com/health",
+    "headers": {
+      "Authorization": "Bearer ${MY_API_TOKEN}"
+    }
+  },
+  {
+    "name": "Example with Timeout",
+    "url": "https://slow-service.com/ping",
+    "timeout": 20
+  }
+]
