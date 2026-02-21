@@ -46,10 +46,10 @@ for i in $(seq 0 $((total - 1))); do
 
   if [[ "$http_code" =~ ^2 ]]; then
     echo "OK (status=$http_code, time=${time_total}s)"
-    ((ok++))
+    ok=$((ok + 1))
   else
     echo "FAIL (status=$http_code, time=${time_total}s)"
-    ((fail++))
+    fail=$((fail + 1))
   fi
 done
 
