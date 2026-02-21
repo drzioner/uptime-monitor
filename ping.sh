@@ -3,6 +3,7 @@ set -euo pipefail
 
 SERVICES_FILE="$(dirname "$0")/services.json"
 DEFAULT_TIMEOUT=10
+IS_CI="${CI:-false}"
 
 # Resolve ${VAR} references with environment variable values
 resolve_env() {
@@ -18,9 +19,22 @@ resolve_env() {
   echo "$value"
 }
 
+# Mask a URL in GitHub Actions logs
+mask_url() {
+  local url="$1"
+  if [[ "$IS_CI" == "true" ]]; then
+    echo "::add-mask::$url"
+  fi
+}
+
 ok=0
 fail=0
 total=$(jq length "$SERVICES_FILE")
+
+# Mask all URLs before any output
+for i in $(seq 0 $((total - 1))); do
+  mask_url "$(jq -r ".[$i].url" "$SERVICES_FILE")"
+done
 
 for i in $(seq 0 $((total - 1))); do
   name=$(jq -r ".[$i].name" "$SERVICES_FILE")
@@ -38,23 +52,20 @@ for i in $(seq 0 $((total - 1))); do
     done < <(jq -r ".[$i].headers | keys[]" "$SERVICES_FILE")
   fi
 
-  printf "Pinging %s (%s) ... " "$name" "$url"
-
   response=$(curl -s -o /dev/null -w "%{http_code} %{time_total}" --max-time "$timeout" "${curl_headers[@]+"${curl_headers[@]}"}" "$url" 2>/dev/null) || response="000 0"
   http_code="${response%% *}"
   time_total="${response##* }"
 
   if [[ "$http_code" =~ ^2 ]]; then
-    echo "OK (status=$http_code, time=${time_total}s)"
-    ok=$((ok + 1))
+    echo "$name — OK (status=$http_code, time=${time_total}s)"
   else
-    echo "FAIL (status=$http_code, time=${time_total}s)"
+    echo "$name — FAIL (status=$http_code, time=${time_total}s)"
     fail=$((fail + 1))
   fi
+  ok=$((ok + 1))
 done
 
 echo ""
-echo "--- Summary ---"
-echo "Total: $total | OK: $ok | FAIL: $fail"
+echo "Total: $total | OK: $((ok - fail)) | FAIL: $fail"
 
 [[ $fail -eq 0 ]]
