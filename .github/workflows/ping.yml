@@ -10,10 +10,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Load services config
+        run: echo "$SERVICES_CONFIG" > services.json
+        env:
+          SERVICES_CONFIG: ${{ secrets.SERVICES_CONFIG }}
       - name: Ping all services
         run: bash ping.sh
         env:
-          # Add your secrets here, e.g.:
-          # RENDER_API_TOKEN: ${{ secrets.RENDER_API_TOKEN }}
-          # NEON_DB_TOKEN: ${{ secrets.NEON_DB_TOKEN }}
+          # Add token secrets here if needed, e.g.:
+          # MY_API_TOKEN: ${{ secrets.MY_API_TOKEN }}
           PLACEHOLDER: "true"
